@@ -1,5 +1,5 @@
-// Fast allocation-free v4 UUIDs.
-// Inspired by the Go implementation at github.com/skeeto/uuid
+//! Fast allocation-free v4 UUIDs.
+//! Inspired by the Go implementation at github.com/skeeto/uuid
 
 const std = @import("std");
 const crypto = std.crypto;
@@ -8,13 +8,22 @@ const testing = std.testing;
 
 pub const Error = error{InvalidUUID};
 
+/// A UUID.
 pub const UUID = struct {
     bytes: [16]u8,
 
-    pub fn init() UUID {
+    /// Create a new v4 UUID from a random source.
+    pub fn init(rand: ?std.Random) UUID {
         var uuid = UUID{ .bytes = undefined };
 
-        crypto.random.bytes(&uuid.bytes);
+        var random = undefined;
+        if (rand) |r| {
+            random = r;
+        } else {
+            random = std.crypto.random;
+        }
+
+        random.bytes(&uuid.bytes);
         // Version 4
         uuid.bytes[6] = (uuid.bytes[6] & 0x0f) | 0x40;
         // Variant 1
@@ -22,11 +31,13 @@ pub const UUID = struct {
         return uuid;
     }
 
-    fn to_string(self: UUID,slice: []u8) void {
-        var string:[36]u8 = format_uuid(self);
+    /// Convert the UUID to a string.
+    fn to_string(self: UUID, slice: []u8) void {
+        var string: [36]u8 = format_uuid(self);
         std.mem.copy(u8, slice, &string);
     }
 
+    /// Convert the UUID to a string with dashes.
     fn format_uuid(self: UUID) [36]u8 {
         var buf: [36]u8 = undefined;
         buf[8] = '-';
@@ -97,6 +108,7 @@ pub const UUID = struct {
         try fmt.format(writer, "{s}", .{buf});
     }
 
+    /// Parse a string into a UUID.
     pub fn parse(buf: []const u8) Error!UUID {
         var uuid = UUID{ .bytes = undefined };
 
@@ -116,12 +128,12 @@ pub const UUID = struct {
     }
 };
 
-// Zero UUID
+/// Zero UUID
 pub const zero: UUID = .{ .bytes = .{0} ** 16 };
 
-// Convenience function to return a new v4 UUID.
+/// Convenience function to return a new v4 UUID.
 pub fn newV4() UUID {
-    return UUID.init();
+    return UUID.init(null);
 }
 
 test "parse and format" {

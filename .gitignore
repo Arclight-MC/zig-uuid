@@ -1,1 +1,4 @@
-/zig-cache/
+# from https://github.com/github/gitignore/blob/main/Zig.gitignore
+.zig-cache/
+zig-out/
+*.o

@@ -1,9 +1,9 @@
 const std = @import("std");
-const UUID = @import("uuid.zig").UUID;
+const UUID = @import("uuid").UUID;
 
 pub fn main() !void {
-    // generate
-    const uuid1 = UUID.init();
+    // generate from a crypto source
+    const uuid1 = UUID.init(null);
     std.debug.print("{}\n", .{uuid1});
 
     // parse
