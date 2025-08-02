@@ -93,12 +93,7 @@ pub const UUID = struct {
         0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
     };
 
-    pub fn format(
-        self: UUID,
-        comptime layout: []const u8,
-        options: fmt.FormatOptions,
-        writer: anytype,
-    ) !void {
+    pub fn format(self: UUID, comptime layout: []const u8, options: fmt.FormatOptions, writer: anytype) !void {
         _ = options; // currently unused
 
         if (layout.len != 0 and layout[0] != 's')
