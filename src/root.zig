@@ -16,7 +16,7 @@ pub const UUID = struct {
     pub fn init(rand: ?std.Random) UUID {
         var uuid = UUID{ .bytes = undefined };
 
-        var random = undefined;
+        var random: std.Random = undefined;
         if (rand) |r| {
             random = r;
         } else {
@@ -34,7 +34,7 @@ pub const UUID = struct {
     /// Convert the UUID to a string.
     fn to_string(self: UUID, slice: []u8) void {
         var string: [36]u8 = format_uuid(self);
-        std.mem.copy(u8, slice, &string);
+        std.mem.copyForwards(u8, slice, &string);
     }
 
     /// Convert the UUID to a string with dashes.
@@ -165,7 +165,9 @@ test "invalid UUID" {
 }
 
 test "check to_string works" {
-    const uuid1 = UUID.init();
+    var prng = std.Random.DefaultPrng.init(0);
+    const rnd = prng.random();
+    const uuid1 = UUID.init(rnd);
 
     var string1: [36]u8 = undefined;
     var string2: [36]u8 = undefined;
