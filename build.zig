@@ -55,4 +55,20 @@ pub fn build(b: *std.Build) void {
     // running the unit tests.
     const test_step = b.step("test", "Run unit tests");
     test_step.dependOn(&run_lib_unit_tests.step);
+    const exe_mod = b.createModule(.{
+        .root_source_file = b.path("examples/create_uuid.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+    exe_mod.addImport("uuid", lib_mod);
+
+    const exe = b.addExecutable(.{
+        .name = "create_uuid",
+        .root_module = exe_mod,
+    });
+
+    const run_exe = b.addRunArtifact(exe);
+
+    const run_step = b.step("run", "Run the example");
+    run_step.dependOn(&run_exe.step);
 }

@@ -31,10 +31,8 @@ pub const UUID = struct {
         return uuid;
     }
 
-    /// Convert the UUID to a string.
-    fn to_string(self: UUID, slice: []u8) void {
-        var string: [36]u8 = format_uuid(self);
-        std.mem.copyForwards(u8, slice, &string);
+    pub fn toString(self: UUID, allocator: std.mem.Allocator) ![]u8 {
+        return std.fmt.allocPrint(allocator, "{f}", .{self});
     }
 
     /// Convert the UUID to a string with dashes.
@@ -93,14 +91,9 @@ pub const UUID = struct {
         0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
     };
 
-    pub fn format(self: UUID, comptime layout: []const u8, options: fmt.FormatOptions, writer: anytype) !void {
-        _ = options; // currently unused
-
-        if (layout.len != 0 and layout[0] != 's')
-            @compileError("Unsupported format specifier for UUID type: '" ++ layout ++ "'.");
-
+    pub fn format(self: UUID, writer: anytype) !void {
         const buf = format_uuid(self);
-        try fmt.format(writer, "{s}", .{buf});
+        try writer.writeAll(&buf);
     }
 
     /// Parse a string into a UUID.
@@ -142,8 +135,16 @@ test "parse and format" {
     };
 
     for (uuids) |uuid| {
-        try testing.expectFmt(uuid, "{}", .{try UUID.parse(uuid)});
+        try testing.expectFmt(uuid, "{f}", .{try UUID.parse(uuid)});
     }
+}
+
+test "toString" {
+    const allocator = std.testing.allocator;
+    const uuid = UUID.init(null);
+    const uuid_str = try uuid.toString(allocator);
+    defer allocator.free(uuid_str);
+    _ = try UUID.parse(uuid_str);
 }
 
 test "invalid UUID" {
@@ -157,21 +158,4 @@ test "invalid UUID" {
     for (uuids) |uuid| {
         try testing.expectError(Error.InvalidUUID, UUID.parse(uuid));
     }
-}
-
-test "check to_string works" {
-    var prng = std.Random.DefaultPrng.init(0);
-    const rnd = prng.random();
-    const uuid1 = UUID.init(rnd);
-
-    var string1: [36]u8 = undefined;
-    var string2: [36]u8 = undefined;
-
-    uuid1.to_string(&string1);
-    uuid1.to_string(&string2);
-
-    std.debug.print("\nUUID {s} \n", .{uuid1});
-    std.debug.print("\nFirst  call to_string {s} \n", .{string1});
-    std.debug.print("Second call to_string {s} \n", .{string2});
-    try testing.expectEqual(string1, string2);
 }
